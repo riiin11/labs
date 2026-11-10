@@ -5,13 +5,12 @@ import (
 	"errors"
 	"log/slog"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 
-	"github.com/you/trip-service/internal/domain/trip"
-	tripuc "github.com/you/trip-service/internal/usecase/trip"
+	"github.com/riiin11/labs/internal/domain/trip"
+	tripuc "github.com/riiin11/labs/internal/usecase/trip"
 )
 
 func passthroughTx() *MocktxManager {

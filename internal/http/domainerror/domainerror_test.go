@@ -7,8 +7,8 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/you/trip-service/internal/domain/trip"
-	"github.com/you/trip-service/internal/http/domainerror"
+	"github.com/riiin11/labs/internal/domain/trip"
+	"github.com/riiin11/labs/internal/http/domainerror"
 )
 
 func TestProblem(t *testing.T) {
@@ -32,11 +32,13 @@ func TestProblem(t *testing.T) {
 		t.Run(c.name, func(t *testing.T) {
 			status, p := domainerror.Problem(c.err, "/api/v1/trips")
 			require.Equal(t, c.status, status)
+			require.Equal(t, int32(c.status), p.Status)
 			require.Equal(t, c.code, p.Code)
-			require.Equal(t, c.status, p.Status)
-			require.Equal(t, "/api/v1/trips", p.Instance)
+			require.NotNil(t, p.Instance)
+			require.Equal(t, "/api/v1/trips", *p.Instance)
 			if c.noDetail != "" {
-				require.NotContains(t, p.Detail, c.noDetail)
+				require.NotNil(t, p.Detail)
+				require.NotContains(t, *p.Detail, c.noDetail)
 			}
 		})
 	}

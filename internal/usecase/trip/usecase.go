@@ -7,7 +7,7 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/you/trip-service/internal/domain/trip"
+	"github.com/riiin11/labs/internal/domain/trip"
 )
 
 type Create struct {

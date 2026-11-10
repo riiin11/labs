@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"runtime/debug"
 
-	"github.com/you/trip-service/internal/generated/api"
+	"github.com/riiin11/labs/internal/generated/api"
 )
 
 func Recover(log *slog.Logger) func(http.Handler) http.Handler {
@@ -20,15 +20,19 @@ func Recover(log *slog.Logger) func(http.Handler) http.Handler {
 						"method", r.Method,
 						"path", r.URL.Path,
 					)
+
+					detail := "Something went wrong"
+					instance := r.URL.Path
+
 					w.Header().Set("Content-Type", "application/problem+json")
 					w.WriteHeader(http.StatusInternalServerError)
 					_ = json.NewEncoder(w).Encode(api.Problem{
 						Type:     "https://tripgo.example/problems/internal-error",
 						Title:    "Internal error",
 						Status:   http.StatusInternalServerError,
-						Detail:   "Something went wrong",
+						Detail:   &detail,
+						Instance: &instance,
 						Code:     "internal_error",
-						Instance: r.URL.Path,
 					})
 				}
 			}()

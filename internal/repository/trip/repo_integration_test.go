@@ -12,9 +12,9 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/stretchr/testify/require"
 
-	"github.com/you/trip-service/internal/domain/trip"
-	"github.com/you/trip-service/internal/infra"
-	triprepo "github.com/you/trip-service/internal/repository/trip"
+	"github.com/riiin11/labs/internal/domain/trip"
+	"github.com/riiin11/labs/internal/infra"
+	triprepo "github.com/riiin11/labs/internal/repository/trip"
 )
 
 func testPool(t *testing.T) *pgxpool.Pool {

@@ -6,7 +6,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/you/trip-service/internal/domain/trip"
+	"github.com/riiin11/labs/internal/domain/trip"
 )
 
 func TestFinish(t *testing.T) {

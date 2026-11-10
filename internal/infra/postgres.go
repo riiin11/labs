@@ -2,12 +2,11 @@ package infra
 
 import (
 	"context"
-	"time"
 
 	"github.com/exaring/otelpgx"
 	"github.com/jackc/pgx/v5/pgxpool"
 
-	"github.com/you/trip-service/internal/config"
+	"github.com/riiin11/labs/internal/config"
 )
 
 func NewPool(ctx context.Context, cfg config.Config) (*pgxpool.Pool, error) {

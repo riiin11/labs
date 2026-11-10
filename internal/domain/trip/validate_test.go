@@ -5,7 +5,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/you/trip-service/internal/domain/trip"
+	"github.com/riiin11/labs/internal/domain/trip"
 )
 
 func validInput() trip.CreateInput {

@@ -4,8 +4,8 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/you/trip-service/internal/domain/trip"
-	"github.com/you/trip-service/internal/generated/api"
+	"github.com/riiin11/labs/internal/domain/trip"
+	"github.com/riiin11/labs/internal/generated/api"
 )
 
 func Validation(field, msg string) error {
@@ -37,9 +37,9 @@ func mk(status int, code, title, detail, instance string) api.Problem {
 	return api.Problem{
 		Type:     "https://tripgo.example/problems/" + code,
 		Title:    title,
-		Status:   status,
-		Detail:   detail,
+		Status:   int32(status),
+		Detail:   &detail,
+		Instance: &instance,
 		Code:     code,
-		Instance: instance,
 	}
 }

@@ -7,10 +7,10 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-type ctxKey struct{}
+type txCtxKey struct{}
 
 func TxFromContext(ctx context.Context) (pgx.Tx, bool) {
-	tx, ok := ctx.Value(ctxKey{}).(pgx.Tx)
+	tx, ok := ctx.Value(txCtxKey{}).(pgx.Tx)
 	return tx, ok
 }
 
@@ -20,7 +20,7 @@ func NewTxManager(pool *pgxpool.Pool) *TxManager { return &TxManager{pool: pool}
 
 func (m *TxManager) Do(ctx context.Context, fn func(context.Context) error) (err error) {
 	if _, ok := TxFromContext(ctx); ok {
-		return fn(ctx) // вложенный Do переиспользует транзакцию
+		return fn(ctx)
 	}
 
 	tx, err := m.pool.BeginTx(ctx, pgx.TxOptions{IsoLevel: pgx.ReadCommitted})
@@ -39,5 +39,5 @@ func (m *TxManager) Do(ctx context.Context, fn func(context.Context) error) (err
 		err = tx.Commit(ctx)
 	}()
 
-	return fn(context.WithValue(ctx, ctxKey{}, tx))
+	return fn(context.WithValue(ctx, txCtxKey{}, tx))
 }

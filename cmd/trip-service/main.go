@@ -7,8 +7,8 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/you/trip-service/internal/config"
-	"github.com/you/trip-service/internal/container"
+	"github.com/riiin11/labs/internal/config"
+	"github.com/riiin11/labs/internal/container"
 )
 
 func main() {

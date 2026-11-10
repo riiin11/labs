@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"os"
 	"time"
+	"strconv"
+
 )
 
 type Config struct {
@@ -37,4 +39,27 @@ func Load() (Config, error) {
 	return c, nil
 }
 
-// getenv, getint, getdur — маленькие хелперы, как в работе 1.
+func getenv(key, def string) string {
+	if v := os.Getenv(key); v != "" {
+		return v
+	}
+	return def
+}
+
+func getint(key string, def int) int {
+	if v := os.Getenv(key); v != "" {
+		if n, err := strconv.Atoi(v); err == nil {
+			return n
+		}
+	}
+	return def
+}
+
+func getdur(key string, def time.Duration) time.Duration {
+	if v := os.Getenv(key); v != "" {
+		if d, err := time.ParseDuration(v); err == nil {
+			return d
+		}
+	}
+	return def
+}

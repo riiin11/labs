@@ -1,11 +1,12 @@
-//go:generate mockgen -source ${GOFILE} -destination mocks_test.go -package ${GOPACKAGE}_test
+//go:generate go tool go.uber.org/mock/mockgen -source ${GOFILE} -destination mocks_test.go -package ${GOPACKAGE}_test
 
 package trip
 
 import (
 	"context"
+	"time"
 
-	"github.com/you/trip-service/internal/domain/trip"
+	"github.com/riiin11/labs/internal/domain/trip"
 )
 
 type (

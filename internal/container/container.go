@@ -8,21 +8,22 @@ import (
 
 	"github.com/go-chi/chi/v5"
 
-	"github.com/you/trip-service/internal/config"
-	"github.com/you/trip-service/internal/http"
-	triphttp "github.com/you/trip-service/internal/http/trip"
-	"github.com/you/trip-service/internal/http/middleware"
-	"github.com/you/trip-service/internal/infra"
-	"github.com/you/trip-service/internal/infra/telemetry"
-	"github.com/you/trip-service/internal/repository/trip"
-	"github.com/you/trip-service/internal/usecase/trip"
+	"github.com/riiin11/labs/internal/config"
+	"github.com/riiin11/labs/internal/generated/api"
+	"github.com/riiin11/labs/internal/http/middleware"
+	triphttp "github.com/riiin11/labs/internal/http/trip"
+	"github.com/riiin11/labs/internal/infra"
+	"github.com/riiin11/labs/internal/infra/telemetry"
+	triprepo "github.com/riiin11/labs/internal/repository/trip"
+	tripuc "github.com/riiin11/labs/internal/usecase/trip"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type App struct {
 	cfg    config.Config
 	log    *slog.Logger
 	server *http.Server
-	pool   interface{ Close() }
+	pool   *pgxpool.Pool
 	otel   func(context.Context) error
 }
 
@@ -37,6 +38,7 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 
 	pool, err := infra.NewPool(ctx, cfg)
 	if err != nil {
+		_ = otelShutdown(ctx)
 		return nil, err
 	}
 
@@ -48,9 +50,7 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 	getUC := tripuc.NewGet(repo)
 	finishUC := tripuc.NewFinish(repo, tx, metrics, log)
 
-	hCreate := triphttp.NewCreate(createUC)
-	hGet := triphttp.NewGet(getUC)
-	hFinish := triphttp.NewFinish(finishUC)
+	h := triphttp.New(createUC, getUC, finishUC, pool)
 
 	r := chi.NewRouter()
 	r.Use(middleware.Recover(log))
@@ -58,14 +58,7 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 	r.Use(middleware.Logging(log))
 	r.Use(middleware.Metrics())
 
-	r.Get("/health", http.Health)
-	r.Get("/ready", http.Ready(pool))
-
-	r.Route("/api/v1/trips", func(r chi.Router) {
-		r.Post("/", hCreate.Handle)
-		r.Get("/{tripId}", hGet.Handle)
-		r.Post("/{tripId}/finish", hFinish.Handle)
-	})
+	api.HandlerFromMux(h, r)
 
 	return &App{
 		cfg:  cfg,
