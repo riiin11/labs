@@ -43,7 +43,7 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 	}
 
 	tx := infra.NewTxManager(pool)
-	repo := triprepo.New(pool)
+	repo := triprepo.New(pool, log)
 	metrics := telemetry.NewMetrics()
 
 	createUC := tripuc.NewCreate(repo, tx, metrics, log)

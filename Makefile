@@ -1,3 +1,6 @@
+include .env
+export
+
 .PHONY: generate migrate migrate-down run lint test test-integration
 
 generate:

@@ -87,17 +87,17 @@ func (mr *MocktripRepositoryMockRecorder) Save(ctx, t any) *gomock.Call {
 }
 
 // SaveStatusHistory mocks base method.
-func (m *MocktripRepository) SaveStatusHistory(ctx context.Context, tripID string, status trip.Status) error {
+func (m *MocktripRepository) SaveStatusHistory(ctx context.Context, tripID string, from, to trip.Status) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "SaveStatusHistory", ctx, tripID, status)
+	ret := m.ctrl.Call(m, "SaveStatusHistory", ctx, tripID, from, to)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // SaveStatusHistory indicates an expected call of SaveStatusHistory.
-func (mr *MocktripRepositoryMockRecorder) SaveStatusHistory(ctx, tripID, status any) *gomock.Call {
+func (mr *MocktripRepositoryMockRecorder) SaveStatusHistory(ctx, tripID, from, to any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SaveStatusHistory", reflect.TypeOf((*MocktripRepository)(nil).SaveStatusHistory), ctx, tripID, status)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SaveStatusHistory", reflect.TypeOf((*MocktripRepository)(nil).SaveStatusHistory), ctx, tripID, from, to)
 }
 
 // MocktxManager is a mock of txManager interface.
