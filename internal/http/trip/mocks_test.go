@@ -133,3 +133,119 @@ func (mr *MockfinishUsecaseMockRecorder) Finish(ctx, id any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Finish", reflect.TypeOf((*MockfinishUsecase)(nil).Finish), ctx, id)
 }
+
+// MocksavePositionUsecase is a mock of savePositionUsecase interface.
+type MocksavePositionUsecase struct {
+	ctrl     *gomock.Controller
+	recorder *MocksavePositionUsecaseMockRecorder
+	isgomock struct{}
+}
+
+// MocksavePositionUsecaseMockRecorder is the mock recorder for MocksavePositionUsecase.
+type MocksavePositionUsecaseMockRecorder struct {
+	mock *MocksavePositionUsecase
+}
+
+// NewMocksavePositionUsecase creates a new mock instance.
+func NewMocksavePositionUsecase(ctrl *gomock.Controller) *MocksavePositionUsecase {
+	mock := &MocksavePositionUsecase{ctrl: ctrl}
+	mock.recorder = &MocksavePositionUsecaseMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MocksavePositionUsecase) EXPECT() *MocksavePositionUsecaseMockRecorder {
+	return m.recorder
+}
+
+// Save mocks base method.
+func (m *MocksavePositionUsecase) Save(ctx context.Context, p trip.Position) (trip.Position, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Save", ctx, p)
+	ret0, _ := ret[0].(trip.Position)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Save indicates an expected call of Save.
+func (mr *MocksavePositionUsecaseMockRecorder) Save(ctx, p any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Save", reflect.TypeOf((*MocksavePositionUsecase)(nil).Save), ctx, p)
+}
+
+// MockgetPositionsUsecase is a mock of getPositionsUsecase interface.
+type MockgetPositionsUsecase struct {
+	ctrl     *gomock.Controller
+	recorder *MockgetPositionsUsecaseMockRecorder
+	isgomock struct{}
+}
+
+// MockgetPositionsUsecaseMockRecorder is the mock recorder for MockgetPositionsUsecase.
+type MockgetPositionsUsecaseMockRecorder struct {
+	mock *MockgetPositionsUsecase
+}
+
+// NewMockgetPositionsUsecase creates a new mock instance.
+func NewMockgetPositionsUsecase(ctrl *gomock.Controller) *MockgetPositionsUsecase {
+	mock := &MockgetPositionsUsecase{ctrl: ctrl}
+	mock.recorder = &MockgetPositionsUsecaseMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockgetPositionsUsecase) EXPECT() *MockgetPositionsUsecaseMockRecorder {
+	return m.recorder
+}
+
+// Get mocks base method.
+func (m *MockgetPositionsUsecase) Get(ctx context.Context, tripID string) ([]trip.Position, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Get", ctx, tripID)
+	ret0, _ := ret[0].([]trip.Position)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Get indicates an expected call of Get.
+func (mr *MockgetPositionsUsecaseMockRecorder) Get(ctx, tripID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Get", reflect.TypeOf((*MockgetPositionsUsecase)(nil).Get), ctx, tripID)
+}
+
+// Mockpinger is a mock of pinger interface.
+type Mockpinger struct {
+	ctrl     *gomock.Controller
+	recorder *MockpingerMockRecorder
+	isgomock struct{}
+}
+
+// MockpingerMockRecorder is the mock recorder for Mockpinger.
+type MockpingerMockRecorder struct {
+	mock *Mockpinger
+}
+
+// NewMockpinger creates a new mock instance.
+func NewMockpinger(ctrl *gomock.Controller) *Mockpinger {
+	mock := &Mockpinger{ctrl: ctrl}
+	mock.recorder = &MockpingerMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *Mockpinger) EXPECT() *MockpingerMockRecorder {
+	return m.recorder
+}
+
+// Ping mocks base method.
+func (m *Mockpinger) Ping(ctx context.Context) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Ping", ctx)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Ping indicates an expected call of Ping.
+func (mr *MockpingerMockRecorder) Ping(ctx any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Ping", reflect.TypeOf((*Mockpinger)(nil).Ping), ctx)
+}

@@ -32,7 +32,7 @@ func TestCreateHandler(t *testing.T) {
 	}
 	uc.EXPECT().Create(gomock.Any(), gomock.Any()).Return(done, nil)
 
-	h := triphttp.New(uc, nil, nil, nil)
+	h := triphttp.New(uc, nil, nil, nil, nil,  nil)
 	body := `{"user_id":"5cb72c04-7650-45c9-a79b-bcdba0631e0c","driver_id":"8860b315-ec86-42eb-a17c-7c163d721ff5","start_point":{"latitude":59.9,"longitude":30.3},"end_point":{"latitude":59.8,"longitude":30.4},"price":1450}`
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/trips", strings.NewReader(body))
 	req.Header.Set("Content-Type", "application/json")
@@ -49,7 +49,7 @@ func TestCreateHandler_BadJSON(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	uc := NewMockcreateUsecase(ctrl)
 
-	h := triphttp.New(uc, nil, nil, nil)
+	h := triphttp.New(uc, nil, nil, nil, nil,  nil)
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/trips", strings.NewReader("{not json"))
 	rec := httptest.NewRecorder()
 
@@ -69,7 +69,7 @@ func TestGetHandler_NotFound(t *testing.T) {
 	id := uuid.NewString()
 	uc.EXPECT().Get(gomock.Any(), id).Return(trip.Trip{}, trip.ErrTripNotFound)
 
-	h := triphttp.New(nil, uc, nil, nil)
+	h := triphttp.New(nil, uc, nil, nil, nil,  nil)
 	req := httptest.NewRequest(http.MethodGet, "/api/v1/trips/"+id, nil)
 	rec := httptest.NewRecorder()
 
@@ -87,7 +87,7 @@ func TestFinishHandler_Completed(t *testing.T) {
 	id := uuid.NewString()
 	uc.EXPECT().Finish(gomock.Any(), id).Return(trip.Trip{}, trip.ErrTripCompleted)
 
-	h := triphttp.New(nil, nil, uc, nil)
+	h := triphttp.New(nil, nil, uc, nil, nil,  nil)
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/trips/"+id+"/finish", nil)
 	rec := httptest.NewRecorder()
 
@@ -105,7 +105,7 @@ func TestFinishHandler_Internal(t *testing.T) {
 	id := uuid.NewString()
 	uc.EXPECT().Finish(gomock.Any(), id).Return(trip.Trip{}, errBoom)
 
-	h := triphttp.New(nil, nil, uc, nil)
+	h := triphttp.New(nil, nil, uc, nil, nil,  nil)
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/trips/"+id+"/finish", nil)
 	rec := httptest.NewRecorder()
 

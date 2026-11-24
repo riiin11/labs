@@ -5,7 +5,7 @@ package trip
 import (
 	"context"
 
-	"github.com/riiin11/labs/internal/domain/trip"
+	 "github.com/riiin11/labs/internal/domain/trip"
 )
 
 type (
@@ -18,4 +18,16 @@ type (
 	finishUsecase interface {
 		Finish(ctx context.Context, id string) (trip.Trip, error)
 	}
+
+	savePositionUsecase interface {
+		Save(ctx context.Context, p trip.Position) (trip.Position, error)
+}
+
+	getPositionsUsecase interface {
+		Get(ctx context.Context, tripID string) ([]trip.Position, error)
+}
+
+	pinger interface {
+		Ping(ctx context.Context) error
+}
 )

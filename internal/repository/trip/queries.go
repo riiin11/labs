@@ -2,139 +2,105 @@ package trip
 
 import (
 	"context"
-	"errors"
 	"time"
 
 	sq "github.com/Masterminds/squirrel"
-	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5"
 
 	"github.com/riiin11/labs/internal/domain/trip"
 )
 
-var tripColumns = []string{
-	"id", "user_id", "driver_id",
-	"start_latitude", "start_longitude", "end_latitude", "end_longitude",
-	"price", "status", "started_at", "finished_at",
-}
-
-func (r *Repo) Save(ctx context.Context, t trip.Trip) error {
-	q, args, err := sq.Update("trips").
-		Set("status", t.Status).
-		Set("finished_at", t.FinishedAt).
-		Where(sq.Eq{"id": t.ID, "status": trip.StatusActive}).
+func (r *Repo) SavePosition(ctx context.Context, p trip.Position) (trip.Position, error) {
+	// 1. Вставляем координату
+	insertQ, insertArgs, err := sq.Insert("trip_positions").
+		Columns("trip_id", "latitude", "longitude", "recorded_at").
+		Values(p.TripID, p.Latitude, p.Longitude, p.RecordedAt).
+		Suffix("RETURNING id").
 		PlaceholderFormat(sq.Dollar).
 		ToSql()
 	if err != nil {
-		return err
+		return trip.Position{}, err
 	}
 
-	tag, err := r.executor(ctx).Exec(ctx, q, args...)
+	var id int64
+	err = r.executor(ctx).QueryRow(ctx, insertQ, insertArgs...).Scan(&id)
 	if err != nil {
-		return err
+		return trip.Position{}, err
 	}
+	p.ID = id
 
-	if tag.RowsAffected() == 0 {
-		return trip.ErrTripCompleted
-	}
-
-	return nil
-}
-
-func (r *Repo) SaveStatusHistory(ctx context.Context, tripID string, from, to trip.Status) error {
-	sql, args, err := sq.Insert("trip_status_history").
-		Columns("trip_id", "from_status", "to_status", "changed_at").
-		Values(uuid.MustParse(tripID), statusPtr(from), string(to), time.Now().UTC()).
+	// 2. Обновляем last_position_at с GREATEST
+	updateQ, updateArgs, err := sq.Update("trips").
+		Set("last_position_at", sq.Expr("GREATEST(last_position_at, ?)", p.RecordedAt)).
+		Where(sq.Eq{"id": p.TripID}).
 		PlaceholderFormat(sq.Dollar).
 		ToSql()
 	if err != nil {
-		return err
+		return trip.Position{}, err
 	}
 
-	_, err = r.executor(ctx).Exec(ctx, sql, args...)
-
-	return err
-}
-
-func statusPtr(s trip.Status) any {
-	if s == "" {
-		return nil
+	_, err = r.executor(ctx).Exec(ctx, updateQ, updateArgs...)
+	if err != nil {
+		return trip.Position{}, err
 	}
 
-	return string(s)
+	return p, nil
 }
 
-func (r *Repo) GetByID(ctx context.Context, id string) (trip.Trip, error) {
-	sql, args, err := sq.Select(tripColumns...).
-		From("trips").
-		Where(sq.Eq{"id": uuid.MustParse(id)}).
+func (r *Repo) GetPositions(ctx context.Context, tripID string) ([]trip.Position, error) {
+	q, args, err := sq.Select("id", "trip_id", "latitude", "longitude", "recorded_at").
+		From("trip_positions").
+		Where(sq.Eq{"trip_id": tripID}).
+		OrderBy("recorded_at ASC", "id ASC").
 		PlaceholderFormat(sq.Dollar).
 		ToSql()
 	if err != nil {
-		return trip.Trip{}, err
+		return nil, err
 	}
 
-	row := r.executor(ctx).QueryRow(ctx, sql, args...)
-
-	t, err := scanTrip(row)
-	if errors.Is(err, pgx.ErrNoRows) {
-		return trip.Trip{}, trip.ErrTripNotFound
-	}
-
-	return t, err
-}
-
-func (r *Repo) Finish(ctx context.Context, id string, at time.Time) (trip.Trip, error) {
-	sql, args, err := sq.Update("trips").
-		Set("status", string(trip.StatusCompleted)).
-		Set("finished_at", at).
-		Set("updated_at", at).
-		Where(sq.Eq{"id": uuid.MustParse(id), "status": string(trip.StatusActive)}).
-		Suffix("RETURNING " + returningColumns()).
-		PlaceholderFormat(sq.Dollar).
-		ToSql()
+	rows, err := r.executor(ctx).Query(ctx, q, args...)
 	if err != nil {
-		return trip.Trip{}, err
+		return nil, err
 	}
+	defer rows.Close()
 
-	done, err := scanTrip(r.executor(ctx).QueryRow(ctx, sql, args...))
-	if err == nil {
-		return done, nil
-	}
-
-	if !errors.Is(err, pgx.ErrNoRows) {
-		return trip.Trip{}, err
-	}
-
-	checkSQL, checkArgs, _ := sq.Select("status").
-		From("trips").
-		Where(sq.Eq{"id": uuid.MustParse(id)}).
-		PlaceholderFormat(sq.Dollar).
-		ToSql()
-
-	var status string
-
-	if err := r.executor(ctx).QueryRow(ctx, checkSQL, checkArgs...).Scan(&status); err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return trip.Trip{}, trip.ErrTripNotFound
+	var positions []trip.Position
+	for rows.Next() {
+		var p trip.Position
+		if err := rows.Scan(&p.ID, &p.TripID, &p.Latitude, &p.Longitude, &p.RecordedAt); err != nil {
+			return nil, err
 		}
-
-		return trip.Trip{}, err
+		positions = append(positions, p)
 	}
-
-	return trip.Trip{}, trip.ErrTripCompleted
+	return positions, rows.Err()
 }
 
-func returningColumns() string {
-	out := ""
+func (r *Repo) GetStaleTrips(ctx context.Context, staleAfter time.Duration) ([]trip.Trip, error) {
+	threshold := time.Now().UTC().Add(-staleAfter)
 
-	for i, c := range tripColumns {
-		if i > 0 {
-			out += ", "
-		}
-
-		out += c
+	q, args, err := sq.Select("id", "driver_id").
+		From("trips").
+		Where(sq.Eq{"status": trip.StatusActive}).
+		Where("COALESCE(last_position_at, started_at) < ?", threshold).
+		OrderBy("COALESCE(last_position_at, started_at) ASC").
+		PlaceholderFormat(sq.Dollar).
+		ToSql()
+	if err != nil {
+		return nil, err
 	}
 
-	return out
+	rows, err := r.executor(ctx).Query(ctx, q, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var trips []trip.Trip
+	for rows.Next() {
+		var t trip.Trip
+		if err := rows.Scan(&t.ID, &t.DriverID); err != nil {
+			return nil, err
+		}
+		trips = append(trips, t)
+	}
+	return trips, rows.Err()
 }

@@ -42,21 +42,6 @@ func (m *MocktripRepository) EXPECT() *MocktripRepositoryMockRecorder {
 	return m.recorder
 }
 
-// Finish mocks base method.
-func (m *MocktripRepository) Finish(ctx context.Context, id string, at time.Time) (trip.Trip, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Finish", ctx, id, at)
-	ret0, _ := ret[0].(trip.Trip)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// Finish indicates an expected call of Finish.
-func (mr *MocktripRepositoryMockRecorder) Finish(ctx, id, at any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Finish", reflect.TypeOf((*MocktripRepository)(nil).Finish), ctx, id, at)
-}
-
 // GetByID mocks base method.
 func (m *MocktripRepository) GetByID(ctx context.Context, id string) (trip.Trip, error) {
 	m.ctrl.T.Helper()
@@ -72,6 +57,36 @@ func (mr *MocktripRepositoryMockRecorder) GetByID(ctx, id any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetByID", reflect.TypeOf((*MocktripRepository)(nil).GetByID), ctx, id)
 }
 
+// GetPositions mocks base method.
+func (m *MocktripRepository) GetPositions(ctx context.Context, tripID string) ([]trip.Position, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetPositions", ctx, tripID)
+	ret0, _ := ret[0].([]trip.Position)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetPositions indicates an expected call of GetPositions.
+func (mr *MocktripRepositoryMockRecorder) GetPositions(ctx, tripID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPositions", reflect.TypeOf((*MocktripRepository)(nil).GetPositions), ctx, tripID)
+}
+
+// GetStaleTrips mocks base method.
+func (m *MocktripRepository) GetStaleTrips(ctx context.Context, staleAfter time.Duration) ([]trip.Trip, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetStaleTrips", ctx, staleAfter)
+	ret0, _ := ret[0].([]trip.Trip)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetStaleTrips indicates an expected call of GetStaleTrips.
+func (mr *MocktripRepositoryMockRecorder) GetStaleTrips(ctx, staleAfter any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetStaleTrips", reflect.TypeOf((*MocktripRepository)(nil).GetStaleTrips), ctx, staleAfter)
+}
+
 // Save mocks base method.
 func (m *MocktripRepository) Save(ctx context.Context, t trip.Trip) error {
 	m.ctrl.T.Helper()
@@ -84,6 +99,21 @@ func (m *MocktripRepository) Save(ctx context.Context, t trip.Trip) error {
 func (mr *MocktripRepositoryMockRecorder) Save(ctx, t any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Save", reflect.TypeOf((*MocktripRepository)(nil).Save), ctx, t)
+}
+
+// SavePosition mocks base method.
+func (m *MocktripRepository) SavePosition(ctx context.Context, p trip.Position) (trip.Position, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SavePosition", ctx, p)
+	ret0, _ := ret[0].(trip.Position)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// SavePosition indicates an expected call of SavePosition.
+func (mr *MocktripRepositoryMockRecorder) SavePosition(ctx, p any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SavePosition", reflect.TypeOf((*MocktripRepository)(nil).SavePosition), ctx, p)
 }
 
 // SaveStatusHistory mocks base method.
@@ -184,4 +214,16 @@ func (m *Mockmetrics) IncCreated(ctx context.Context) {
 func (mr *MockmetricsMockRecorder) IncCreated(ctx any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IncCreated", reflect.TypeOf((*Mockmetrics)(nil).IncCreated), ctx)
+}
+
+// IncPositionsSaved mocks base method.
+func (m *Mockmetrics) IncPositionsSaved(ctx context.Context) {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "IncPositionsSaved", ctx)
+}
+
+// IncPositionsSaved indicates an expected call of IncPositionsSaved.
+func (mr *MockmetricsMockRecorder) IncPositionsSaved(ctx any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IncPositionsSaved", reflect.TypeOf((*Mockmetrics)(nil).IncPositionsSaved), ctx)
 }

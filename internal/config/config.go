@@ -18,6 +18,13 @@ type Config struct {
 	DBConnectTimeout  time.Duration
 	DBQueryTimeout    time.Duration
 	DBMaxConnLifetime time.Duration
+
+	PositionCheckInterval time.Duration
+	PositionStaleAfter    time.Duration
+	PositionWorkers       int
+	PositionQueueSize     int
+	PushHTTPURL           string
+	PushRequestTimeout    time.Duration
 }
 
 func Load() (Config, error) {
@@ -31,6 +38,12 @@ func Load() (Config, error) {
 		DBConnectTimeout:  getdur("DATABASE_CONNECT_TIMEOUT", 5*time.Second),
 		DBQueryTimeout:    getdur("DATABASE_QUERY_TIMEOUT", 3*time.Second),
 		DBMaxConnLifetime: getdur("DATABASE_MAX_CONN_LIFETIME", time.Hour),
+		PositionCheckInterval: getdur("POSITION_CHECK_INTERVAL", 30*time.Second),
+		PositionStaleAfter:    getdur("POSITION_STALE_AFTER", 60*time.Second),
+		PositionWorkers:       getint("POSITION_WORKERS", 4),
+		PositionQueueSize:     getint("POSITION_QUEUE_SIZE", 100),
+		PushHTTPURL:           os.Getenv("PUSH_HTTP_URL"),
+		PushRequestTimeout:    getdur("PUSH_REQUEST_TIMEOUT", time.Second),
 	}
 	if c.DatabaseURL == "" {
 		return Config{}, fmt.Errorf("DATABASE_URL is required")

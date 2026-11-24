@@ -1,110 +1,38 @@
-package container
+package main
 
 import (
 	"context"
-	"encoding/json"
-	"log/slog"
-	"net/http"
-	"time"
-
-	"github.com/go-chi/chi/v5"
-	"github.com/jackc/pgx/v5/pgxpool"
+	"fmt"
+	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/riiin11/labs/internal/config"
-	"github.com/riiin11/labs/internal/generated/api"
-	"github.com/riiin11/labs/internal/http/domainerror"
-	"github.com/riiin11/labs/internal/http/middleware"
-	triphttp "github.com/riiin11/labs/internal/http/trip"
-	"github.com/riiin11/labs/internal/infra"
-	"github.com/riiin11/labs/internal/infra/telemetry"
-	triprepo "github.com/riiin11/labs/internal/repository/trip"
-	tripuc "github.com/riiin11/labs/internal/usecase/trip"
+	"github.com/riiin11/labs/internal/container"
 )
 
-type App struct {
-	cfg    config.Config
-	log    *slog.Logger
-	server *http.Server
-	pool   *pgxpool.Pool
-	otel   func(context.Context) error
-}
-
-func New(ctx context.Context, cfg config.Config) (*App, error) {
-	log := telemetry.NewLogger(cfg.LogLevel)
-
-	otelShutdown, err := telemetry.Init(ctx)
+func main() {
+	cfg, err := config.Load()
 	if err != nil {
-		log.Warn("otel init failed, continuing without telemetry", "err", err)
-		otelShutdown = func(context.Context) error { return nil }
+		fmt.Fprintf(os.Stderr, "failed to load config: %v\n", err)
+		os.Exit(1)
 	}
 
-	pool, err := infra.NewPool(ctx, cfg)
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+
+	app, err := container.New(ctx, cfg)
 	if err != nil {
-		_ = otelShutdown(ctx)
-		return nil, err
+		fmt.Fprintf(os.Stderr, "failed to initialize app: %v\n", err)
+		os.Exit(1)
+	}
+	defer app.Close()
+
+	fmt.Println("Starting server on", cfg.HTTPAddr)
+	if err := app.Run(ctx); err != nil {
+		fmt.Fprintf(os.Stderr, "server stopped with error: %v\n", err)
+		os.Exit(1)
 	}
 
-	tx := infra.NewTxManager(pool, cfg.DBQueryTimeout)
-	repo := triprepo.New(pool, log)
-	metrics := telemetry.NewMetrics()
-
-	createUC := tripuc.NewCreate(repo, tx, metrics, log)
-	getUC := tripuc.NewGet(repo)
-	finishUC := tripuc.NewFinish(repo, tx, metrics, log)
-
-	h := triphttp.New(createUC, getUC, finishUC, pool)
-
-	r := chi.NewRouter()
-	r.Use(middleware.Recover(log))
-	r.Use(middleware.Logging(log))
-	r.Use(middleware.Metrics())
-
-	api.HandlerWithOptions(h, api.ChiServerOptions{
-		BaseRouter: r,
-		ErrorHandlerFunc: func(w http.ResponseWriter, r *http.Request, err error) {
-			status, body := domainerror.Problem(
-				domainerror.Validation("trip_id", "must be a valid UUID"), r.URL.Path)
-			w.Header().Set("Content-Type", "application/problem+json")
-			w.WriteHeader(status)
-			_ = json.NewEncoder(w).Encode(body)
-		},
-	})
-
-	return &App{
-		cfg:  cfg,
-		log:  log,
-		pool: pool,
-		otel: otelShutdown,
-		server: &http.Server{
-			Addr:              cfg.HTTPAddr,
-			Handler:           r,
-			ReadTimeout:       5 * time.Second,
-			ReadHeaderTimeout: 3 * time.Second,
-			WriteTimeout:      10 * time.Second,
-			IdleTimeout:       60 * time.Second,
-		},
-	}, nil
-}
-
-func (a *App) Run(ctx context.Context) error {
-	errCh := make(chan error, 1)
-	go func() { errCh <- a.server.ListenAndServe() }()
-
-	select {
-	case <-ctx.Done():
-	case err := <-errCh:
-		if err != nil && err != http.ErrServerClosed {
-			return err
-		}
-	}
-
-	shutdownCtx, cancel := context.WithTimeout(context.Background(), a.cfg.ShutdownTimeout)
-	defer cancel()
-
-	return a.server.Shutdown(shutdownCtx)
-}
-
-func (a *App) Close() {
-	a.pool.Close()
-	_ = a.otel(context.Background())
+	fmt.Println("Server stopped gracefully")
 }
