@@ -89,6 +89,23 @@ func (r *Repo) SaveStatusHistory(ctx context.Context, tripID string, from, to tr
 	return err
 }
 
+func (r *Repo) Create(ctx context.Context, t trip.Trip) error {
+	q, args, err := sq.Insert("trips").
+	Columns("id", "user_id", "driver_id", "start_latitude", "start_longitude", "end_latitude", "end_longitude", "price", "status", "started_at").
+	Values(t.ID, t.UserID, t.DriverID, t.StartPoint.Latitude, t.StartPoint.Longitude, t.EndPoint.Latitude, t.EndPoint.Longitude, t.Price, t.Status, t.StartedAt).
+	PlaceholderFormat(sq.Dollar).
+	ToSql()
+	if err != nil {
+		return err
+	}
+
+	_, err = r.executor(ctx).Exec(ctx, q, args...)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func (r *Repo) GetByID(ctx context.Context, id string) (trip.Trip, error) {
 	sql, args, err := sq.Select(tripColumns...).
 		From("trips").

@@ -76,7 +76,6 @@ func (w *WorkerPool) Start(ctx context.Context) {
 
 func (w *WorkerPool) Stop(ctx context.Context) {
 	w.cancel()
-	close(w.queue)
 
 	done := make(chan struct{})
 	go func() {
@@ -86,6 +85,7 @@ func (w *WorkerPool) Stop(ctx context.Context) {
 
 	select {
 	case <-done:
+		close(w.queue)
 		w.log.Info("worker pool stopped gracefully")
 	case <-ctx.Done():
 		w.log.Warn("worker pool stop timeout")

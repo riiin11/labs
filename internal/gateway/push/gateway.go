@@ -47,7 +47,7 @@ func (g *Gateway) SendRequestPosition(ctx context.Context, driverID, tripID stri
 
 	// В контракте Push Service (contracts/openapi/push-service.openapi.yaml) 
 	// путь обычно /push или /api/v1/push. Проверьте, какой именно путь там указан.
-	httpReq, err := http.NewRequestWithContext(ctx, http.MethodPost, g.url+"/push", bytes.NewReader(bodyBytes))
+	httpReq, err := http.NewRequestWithContext(ctx, http.MethodPost, g.url+"api/v1/push", bytes.NewReader(bodyBytes))
 	if err != nil {
 		return fmt.Errorf("create request: %w", err)
 	}
@@ -57,7 +57,9 @@ func (g *Gateway) SendRequestPosition(ctx context.Context, driverID, tripID stri
 	if err != nil {
 		return fmt.Errorf("http do: %w", err)
 	}
-	defer resp.Body.Close() // Всегда закрываем тело
+	defer func() {
+		_ = resp.Body.Close() // Всегда закрываем тело
+	}()
 
 	if resp.StatusCode >= 400 {
 		return fmt.Errorf("push service returned status: %d", resp.StatusCode)
