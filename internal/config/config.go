@@ -3,9 +3,8 @@ package config
 import (
 	"fmt"
 	"os"
-	"time"
 	"strconv"
-
+	"time"
 )
 
 type Config struct {

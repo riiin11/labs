@@ -30,6 +30,11 @@ func Logging(log *slog.Logger) func(http.Handler) http.Handler {
 			if route == "" {
 				route = r.URL.Path
 			}
+
+			if span := trace.SpanFromContext(r.Context()); span.IsRecording() {
+				span.SetName(r.Method + " " + route)
+			}
+
 			sc := trace.SpanFromContext(r.Context()).SpanContext()
 
 			attrs := []any{
@@ -40,10 +45,11 @@ func Logging(log *slog.Logger) func(http.Handler) http.Handler {
 				"trace_id", sc.TraceID().String(),
 				"span_id", sc.SpanID().String(),
 			}
+
 			if sw.status >= 500 {
-				log.Error("request handled", attrs...)
+				log.ErrorContext(r.Context(), "request handled", attrs...)
 			} else {
-				log.Info("request handled", attrs...)
+				log.InfoContext(r.Context(), "request handled", attrs...)
 			}
 		})
 	}

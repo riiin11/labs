@@ -2,21 +2,23 @@ package container
 
 import (
 	"context"
+	"encoding/json"
 	"log/slog"
 	"net/http"
 	"time"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/riiin11/labs/internal/config"
 	"github.com/riiin11/labs/internal/generated/api"
+	"github.com/riiin11/labs/internal/http/domainerror"
 	"github.com/riiin11/labs/internal/http/middleware"
 	triphttp "github.com/riiin11/labs/internal/http/trip"
 	"github.com/riiin11/labs/internal/infra"
 	"github.com/riiin11/labs/internal/infra/telemetry"
 	triprepo "github.com/riiin11/labs/internal/repository/trip"
 	tripuc "github.com/riiin11/labs/internal/usecase/trip"
-	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type App struct {
@@ -42,7 +44,7 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 		return nil, err
 	}
 
-	tx := infra.NewTxManager(pool)
+	tx := infra.NewTxManager(pool, cfg.DBQueryTimeout)
 	repo := triprepo.New(pool, log)
 	metrics := telemetry.NewMetrics()
 
@@ -54,11 +56,19 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 
 	r := chi.NewRouter()
 	r.Use(middleware.Recover(log))
-	r.Use(middleware.Tracing())
 	r.Use(middleware.Logging(log))
 	r.Use(middleware.Metrics())
 
-	api.HandlerFromMux(h, r)
+	api.HandlerWithOptions(h, api.ChiServerOptions{
+		BaseRouter: r,
+		ErrorHandlerFunc: func(w http.ResponseWriter, r *http.Request, err error) {
+			status, body := domainerror.Problem(
+				domainerror.Validation("trip_id", "must be a valid UUID"), r.URL.Path)
+			w.Header().Set("Content-Type", "application/problem+json")
+			w.WriteHeader(status)
+			_ = json.NewEncoder(w).Encode(body)
+		},
+	})
 
 	return &App{
 		cfg:  cfg,
@@ -74,26 +84,4 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 			IdleTimeout:       60 * time.Second,
 		},
 	}, nil
-}
-
-func (a *App) Run(ctx context.Context) error {
-	errCh := make(chan error, 1)
-	go func() { errCh <- a.server.ListenAndServe() }()
-
-	select {
-	case <-ctx.Done():
-	case err := <-errCh:
-		if err != nil && err != http.ErrServerClosed {
-			return err
-		}
-	}
-
-	shutdownCtx, cancel := context.WithTimeout(context.Background(), a.cfg.ShutdownTimeout)
-	defer cancel()
-	return a.server.Shutdown(shutdownCtx)
-}
-
-func (a *App) Close() {
-	a.pool.Close()
-	_ = a.otel(context.Background())
 }
